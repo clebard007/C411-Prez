@@ -8,7 +8,8 @@
 [b]🎬 Titre original :[/b] ${original_title}
 [b]📍 Pays :[/b] ${country}
 [b]🎭 Genres :[/b] ${genres}
-[b]🔞 Classification :[/b] $classification
+[b]✅  Classification :[/b] ${classification}
+[b]💰 Budget :[/b] ${budget}
 [b]📅 Sortie :[/b] ${release_date}
 [b]⏱ Durée :[/b] ${duration}
 [b]⭐ Note :[/b] [img]${url_etoiles}[/img] (${pourcentage}% - ${nb_votes} votants)
@@ -24,9 +25,11 @@ ${synopsis}
 
 
 [img]${banner_tech}[/img]
+[b]💿 Source :[/b] ${source}
 [b]📺 Qualité :[/b] ${quality}
 [b]📁 Format :[/b] ${format}
 [b]🎞️ Codec Vidéo :[/b] ${video_codec}
+[b]⚡ Débit vidéo :[/b] ${video_bitrate}
 
 
 [img]${banner_audio}[/img]

@@ -19,7 +19,6 @@ BASE_IMAGE_URL = "https://image.tmdb.org/t/p/"
 TAILLE_PHOTO_ACTEUR = "original"  
 TAILLE_AFFICHE = "original"
 
-
 NOM_FICHIER_TEMPLATE = os.getenv("FICHIER_TEMPLATE", "./template/template.tmp")
 
 # Bannières depuis le .env
@@ -103,6 +102,7 @@ else:
             print("\nRécupération des métadonnées en cours...")
             media = tmdb.Movies(selection['id']) if media_type == 'movie' else tmdb.TV(selection['id'])
             infos = media.info(language=TMDB_LANGUAGE, append_to_response="credits,videos,external_ids,release_dates,content_ratings")
+            
             # =================================================================
             # VARIABLES DE BASE AVEC FALLBACK "Non disponible"
             # =================================================================
@@ -124,7 +124,7 @@ else:
             chemin_affiche = infos.get('poster_path')
             url_affiche = f"{BASE_IMAGE_URL}{TAILLE_AFFICHE}{chemin_affiche}" if chemin_affiche else ""
 
-            classification = "Tout public"
+            classification = "Non disponible"
             if media_type == 'movie':
                 results = infos.get('release_dates', {}).get('results', [])
                 for rd in results:
@@ -310,6 +310,19 @@ else:
                     
             liens_complets = f"{bbcode_tmdb} - {bbcode_imdb} - {bbcode_trailer}"
             
+            # =================================================================
+            # RÉCUPÉRATION DU BUDGET (Seulement pour les films)
+            # =================================================================
+            if media_type == 'movie':
+                budget_brut = infos.get('budget', 0)
+                if budget_brut > 0:
+                    # Formate avec des espaces (ex: 150000000 -> 150 000 000 $)
+                    bbcode_budget = f"{budget_brut:,} $".replace(",", " ")
+                else:
+                    bbcode_budget = "Non disponible"
+            else:
+                bbcode_budget = "Non disponible (Série)"
+
             # Réalisateurs / Créateurs
             if media_type == 'movie':
                 realisateurs = [m['name'] for m in infos.get('credits', {}).get('crew', []) if m.get('job') == 'Director']
@@ -322,7 +335,7 @@ else:
             images_acteurs_bbcode = ""
             noms_acteurs_bbcode = ""
             
-            cast_list = infos.get('credits', {}).get('cast', [])[:4]
+            cast_list = infos.get('credits', {}).get('cast', [])[:6]
             if not cast_list:
                 noms_acteurs_bbcode = "Non disponible"
             else:
@@ -339,7 +352,7 @@ else:
 
                 images_acteurs_bbcode = images_acteurs_bbcode.strip()
                 noms_acteurs_bbcode = noms_acteurs_bbcode.strip(" • ")
-
+                
             # =================================================================
             # INJECTION DANS LE TEMPLATE
             # =================================================================
@@ -362,11 +375,14 @@ else:
                 "actors_images": images_acteurs_bbcode,
                 "actors_names": noms_acteurs_bbcode,
                 "synopsis": synopsis,
+                "budget": bbcode_budget,
                 
                 # Champs techniques à définir par l'utilisateur
-                "quality": "À définir (ex: 2160p UHD)",
-                "format": "À définir (ex: MKV)",
-                "video_codec": "À définir (ex: HEVC)",
+                "source": "(ex: BluRay 2160p UHD)",
+                "quality": "(ex: 2160p UHD)",
+                "format": "(ex: MKV)",
+                "video_codec": "(ex: HEVC)",
+                "video_bitrate": "(ex: 15000 kbps)",
                 
                 # Bannières
                 "banner_info": BANNER_INFO,
