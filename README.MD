@@ -6,7 +6,7 @@ Prérequis:
 
 ## Infos
 
-Le script a été testé sur Windows 11 et Ubuntu 22.04
+Le script a été testé sur Windows 11, Ubuntu 22.04 et Macos
 
 ## Utilisation
 
@@ -14,5 +14,5 @@ Pour générer un nfo:
 `python generate_nfo.py --video_file C:\temp\C411\C411-Prez\film.mkv --output film.nfo`
 
 Pour générer une présentation
-`python generate_prez.py --video_file C:\temp\C411\C411-Prez\film.mkv --output film.txt`
+`python generate_prez.py`
 

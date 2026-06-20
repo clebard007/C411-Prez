@@ -1,20 +1,35 @@
-[h1]${title}[/h1]
+[h1] [b]${title} (${year})[/b][/h1]
 [img]${affiche}[/img]
-[img]https://i.postimg.cc/kgG6LBSX/Informations-generales.png[/img]
-Pays : ${country}
-Sortie : ${release_date}
-Durée : ${duration}
-Réalisateur : ${director}
-Genres : ${genres}
-Acteurs : ${actors}
-[img][/img]
-[img]https://i.postimg.cc/wjMyn7N7/Synopsis.png[/img]
+
+
+
+
+[img]${banner_info}[/img]
+[b]🎬 Titre original :[/b] ${original_title}
+[b]📍 Pays :[/b] ${country}
+[b]🎭 Genres :[/b] ${genres}
+[b]🔞 Classification :[/b] $classification
+[b]📅 Sortie :[/b] ${release_date}
+[b]⏱ Durée :[/b] ${duration}
+[b]⭐ Note :[/b] [img]${url_etoiles}[/img] (${pourcentage}% - ${nb_votes} votants)
+[b]🔗 Liens :[/b] ${liens}
+[b]🎥 Réalisateur :[/b] ${director}
+[b]🌟 Acteurs principaux :[/b] 
+${actors_images}
+${actors_names}
+
+
+[img]${banner_synopsis}[/img]
 ${synopsis}
-[img]https://i.postimg.cc/CLmnvjRf/Details-techniques.png[/img]
-Qualité : ${quality}
-Format : ${format}
-Codec Vidéo : ${video_codec}
-[img]https://i.postimg.cc/13XnbfFR/Bande-son.png[/img]
+
+
+[img]${banner_tech}[/img]
+[b]📺 Qualité :[/b] ${quality}
+[b]📁 Format :[/b] ${format}
+[b]🎞️ Codec Vidéo :[/b] ${video_codec}
+
+
+[img]${banner_audio}[/img]
 [table]
 [tr][th]#[/th][th]Langue[/th][th]Codec[/th][th]Canaux[/th][th]Bitrate[/th][/tr]
 [tr][td]1[/td][td][img=32x24]https://flagcdn.com/32x24/gb.png[/img] Anglais[/td][td]DTS-HD Master Audio[/td][td]5.1[/td][td]00000 kb/s[/td][/tr]
@@ -54,7 +69,9 @@ Codec Vidéo : ${video_codec}
 [tr][td]1[/td][td][img=32x24]https://flagcdn.com/32x24/es.png[/img] Espagnol[/td][td]AAC[/td][td]5.1[/td][td]0000 kb/s[/td][/tr]
 [tr][td]1[/td][td][img=32x24]https://flagcdn.com/32x24/es.png[/img] Espagnol[/td][td]AAC[/td][td]2.0[/td][td]0000 kb/s[/td][/tr]
 [/table]
-[img]https://i.postimg.cc/4xy7jmcf/Sous-titres.png[/img]
+
+
+[img]${banner_subs}[/img]
 [table]
 [tr][th]#[/th][th]Langue[/th][th]Format[/th][th]Type[/th][/tr]
 [tr][td]1[/td][td][img=32x24]https://flagcdn.com/32x24/gb.png[/img] Anglais[/td][td]PGS[/td][td]Complets[/td][/tr]
@@ -118,8 +135,10 @@ Codec Vidéo : ${video_codec}
 [tr][td]1[/td][td][img=32x24]https://flagcdn.com/32x24/tr.png[/img] Turc[/td][td]PGS[/td][td]Forcés[/td][/tr]
 [tr][td]1[/td][td][img=32x24]https://flagcdn.com/32x24/tr.png[/img] Turc[/td][td]PGS[/td][td]SDH[/td][/tr]
 [/table]
-[img]https://i.postimg.cc/mgkzKt9P/Telechargement.png[/img]
-Release : 
-Team : Spudmonsters
-Nombre de fichiers : 
-Poids Total : 00.00 GiB
+
+
+[img]${banner_download}[/img]
+[b]💿 Release :[/b] 
+[b]👥 Team :[/b] Spudmonsters
+[b]🗂️ Nombre de fichiers :[/b] 
+[b]⚖️ Poids Total :[/b] 00.00 GiB
