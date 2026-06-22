@@ -16,7 +16,7 @@ parser.add_argument('-f', '--video_file', required=True, help='Path to the video
 
 args = parser.parse_args()
 
-load_dotenv("./.env.example")
+load_dotenv()
 tmdb.API_KEY = os.getenv("TMDB_API_KEY")
 TMDB_LANGUAGE = os.getenv("TMDB_LANGUAGE", "fr-FR")
 TMDB_REGION = os.getenv("TMDB_REGION", "FR")
