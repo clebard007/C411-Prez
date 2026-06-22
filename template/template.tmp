@@ -1,7 +1,5 @@
-[h1] [b]${title} (${year})[/b][/h1]
-[img]${affiche}[/img]
-
-
+[center][b][font=Verdana][color=#3d85c6][size=28]${title} (${year})[/color][/size][/font][/b]
+[img]${affiche}[/img][/center]
 
 
 [img]${banner_info}[/img]
@@ -47,7 +45,7 @@ ${subtitle_tracks}
 
 
 [img]${banner_download}[/img]
-[b]💿 Release : ${Release_name}[/b] 
-[b]👥 Team :[/b] ${team_name}
-[b]🗂️ Nombre de fichiers : ${nb_files}[/b] 
-[b]⚖️ Poids Total :[/b] ${size} Gi
+[b]💿 Release :[/b] 
+[b]👥 Team :[/b] Spudmonsters
+[b]🗂️ Nombre de fichiers :[/b] 
+[b]⚖️ Poids Total :[/b] 00.00 GiB
