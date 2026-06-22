@@ -2,12 +2,21 @@ import os
 import re
 from string import Template
 from dotenv import load_dotenv
+from pymediainfo import MediaInfo
 import tmdbsimple as tmdb
+import argparse
+import math
 
 # =====================================================================
 # 1. CONFIGURATION INITIALE
 # =====================================================================
-load_dotenv()
+
+parser = argparse.ArgumentParser(description='Generer Presentation pour un film ou une série à partir de TMDB')
+parser.add_argument('-f', '--video_file', required=True, help='Path to the video file')
+
+args = parser.parse_args()
+
+load_dotenv("./.env.example")
 tmdb.API_KEY = os.getenv("TMDB_API_KEY")
 TMDB_LANGUAGE = os.getenv("TMDB_LANGUAGE", "fr-FR")
 TMDB_REGION = os.getenv("TMDB_REGION", "FR")
@@ -28,6 +37,7 @@ BANNER_TECH = os.getenv("DETAILS_TECHNIQUES_URL", "")
 BANNER_AUDIO = os.getenv("LANGUES_URL", "")
 BANNER_SUBS = os.getenv("SOUS_TITRES_URL", "")
 BANNER_DOWNLOAD = os.getenv("TELECHARGEMENT_URL", "")
+TEAM_NAME = os.getenv("TEAM_NAME", "C411-Prez")
 
 # =====================================================================
 # 2. FONCTIONS UTILITAIRES
@@ -35,6 +45,224 @@ BANNER_DOWNLOAD = os.getenv("TELECHARGEMENT_URL", "")
 def generer_etoiles(vote_average):
     if not vote_average: return "Aucune note"
     return f"https://img.streetprez.com/note/{round(vote_average * 10)}.svg"
+
+def bytes_to_gib(size_bytes):
+    return round(size_bytes / (1024 ** 3), 2)
+
+def analyser_release_infos(fichier_media):
+    """
+    Analyse MediaInfo pour récupérer :
+    - langues
+    - MULTi
+    - HDR
+    - Atmos
+    """
+
+    media_info = MediaInfo.parse(fichier_media)
+
+    langues = set()
+
+    hdr = []
+    atmos = False
+
+    for track in media_info.tracks:
+
+        # Audio
+        if track.track_type == "Audio":
+
+            if track.language:
+                langues.add(track.language.upper())
+
+            format_commercial = (
+                getattr(track, "commercial_name", "") or ""
+            ).upper()
+
+            format_audio = (
+                getattr(track, "format", "") or ""
+            ).upper()
+
+            if (
+                "ATMOS" in format_commercial
+                or "ATMOS" in format_audio
+            ):
+                atmos = True
+
+        # Vidéo
+        elif track.track_type == "Video":
+
+            hdr_format = (
+                getattr(track, "hdr_format", "") or ""
+            ).upper()
+
+            hdr_format_string = (
+                getattr(track, "hdr_format_string", "") or ""
+            ).upper()
+
+            complete_name = hdr_format + " " + hdr_format_string
+
+            if "DOLBY VISION" in complete_name:
+                hdr.append("DV")
+
+            if "HDR10+" in complete_name:
+                hdr.append("HDR10+")
+
+            elif "HDR10" in complete_name:
+                hdr.append("HDR")
+
+    # Détermination du tag langue
+    langues = sorted(list(langues))
+
+    if len(langues) > 1:
+        langue_tag = "MULTi"
+
+    elif len(langues) == 1:
+
+        langue = langues[0]
+
+        mapping = {
+            "FR": "FRENCH",
+            "EN": "VOSTFR",
+            "JA": "JAPANESE",
+            "ES": "SPANISH",
+            "IT": "ITALIAN"
+        }
+
+        langue_tag = mapping.get(langue, langue)
+
+    else:
+        langue_tag = "MULTi"
+
+    return {
+        "langue_tag": langue_tag,
+        "hdr": ".".join(dict.fromkeys(hdr)),
+        "atmos": "Atmos" if atmos else ""
+    }
+
+def generer_infos_techniques(fichier_media):
+    """
+    Récupère les informations techniques depuis MediaInfo.
+    """
+
+    media_info = MediaInfo.parse(fichier_media)
+
+    source = "WEB"
+    quality = "N/A"
+    file_format = os.path.splitext(fichier_media)[1][1:].upper()
+    video_codec = "N/A"
+    video_debit = "N/A"
+
+    for track in media_info.tracks:
+
+        # Piste vidéo
+        if track.track_type == "Video":
+
+            largeur = getattr(track, "width", 0)
+
+            if largeur:
+                largeur = int(largeur)
+
+                if largeur >= 3800:
+                    quality = "2160p UHD"
+                elif largeur >= 1900:
+                    quality = "1080p"
+                elif largeur >= 1200:
+                    quality = "720p"
+
+            if track.format:
+                video_codec = track.format
+
+            if track.bit_rate:
+                video_debit = f"{int(track.bit_rate) // 1000} kb/s"
+
+        # Piste générale
+        elif track.track_type == "General":
+
+            nom = os.path.basename(fichier_media).lower()
+
+            if "bluray" in nom or "blu-ray" in nom:
+                source = "BluRay"
+            elif "web-dl" in nom:
+                source = "WEB-DL"
+            elif "webrip" in nom:
+                source = "WEBRip"
+            elif "hdtv" in nom:
+                source = "HDTV"
+
+    return {
+        "source": source,
+        "quality": quality,
+        "file_format": file_format,
+        "video_codec": video_codec,
+        "video_debit": video_debit
+    }
+
+
+def generer_release_name(
+        titre,
+        annee,
+        quality,
+        source,
+        video_codec,
+        fichier_media,
+        groupe_release):
+
+    infos = analyser_release_infos(fichier_media)
+
+    titre = re.sub(
+        r'[^A-Za-z0-9]+',
+        '.',
+        titre
+    ).strip('.')
+
+    morceaux = [
+        titre,
+        str(annee),
+        infos["langue_tag"],
+        quality.replace(" UHD", "").replace(" ", "."),
+        source
+    ]
+
+    if infos["hdr"]:
+        morceaux.append(infos["hdr"])
+
+    if infos["atmos"]:
+        morceaux.append(infos["atmos"])
+
+    morceaux.append(video_codec)
+
+    release = ".".join(
+        morceau
+        for morceau in morceaux
+        if morceau
+    )
+
+    return f"{release}-{groupe_release}"
+
+
+def recuperer_infos_fichiers(chemin):
+    """
+    Retourne :
+        nb_files
+        size
+    """
+
+    if os.path.isfile(chemin):
+        nb_files = 1
+        total_size = os.path.getsize(chemin)
+
+    else:
+        nb_files = 0
+        total_size = 0
+
+        for root, dirs, files in os.walk(chemin):
+            nb_files += len(files)
+
+            for fichier in files:
+                total_size += os.path.getsize(
+                    os.path.join(root, fichier)
+                )
+
+    return nb_files, bytes_to_gib(total_size)
 
 def formater_duree(duree_minutes):
     if not duree_minutes: return "Non disponible"
@@ -45,6 +273,151 @@ def formater_duree(duree_minutes):
 def nettoyer_nom_fichier(nom):
     return re.sub(r'[\\/*?:"<>|]', "", nom)
 
+def determiner_type_sous_titre(track):
+    """
+    Détermine le type de sous-titre :
+    - SDH
+    - Forcés
+    - Complets
+    """
+
+    titre = (track.title or "").lower()
+
+    if (
+        "sdh" in titre
+        or "malentendant" in titre
+        or "hearing impaired" in titre
+    ):
+        return "SDH"
+
+    if (
+        getattr(track, "forced", "No") == "Yes"
+        or "forced" in titre
+        or "forcé" in titre
+    ):
+        return "Forcés"
+
+    return "Complets"
+
+
+def generer_tableau_sous_titres(fichier_media):
+    """
+    Analyse les pistes de sous-titres et retourne les lignes BBCode.
+    """
+
+    flags = {
+        "fr": "fr",
+        "en": "gb",
+        "ja": "jp",
+        "es": "es",
+        "it": "it",
+        "de": "de",
+        "ru": "ru",
+        "ko": "kr",
+        "zh": "cn",
+        "pt": "pt",
+        "ar": "sa"
+    }
+
+    media_info = MediaInfo.parse(fichier_media)
+
+    lignes = []
+    index = 1
+
+    for track in media_info.tracks:
+
+        if track.track_type != "Text":
+            continue
+
+        langue = track.language or "Inconnue"
+        format_st = track.format or "N/A"
+
+        # Réutilisation de la logique existante pour le drapeau
+        country_short_name = flags.get(
+            langue.lower(),
+            langue.lower()[:2]
+        )
+
+        type_st = determiner_type_sous_titre(track)
+
+        ligne = (
+            f"[tr]"
+            f"[td]{index}[/td]"
+            f"[td][img=32x24]"
+            f"https://flagcdn.com/32x24/{country_short_name}.png"
+            f"[/img] {langue.capitalize()}[/td]"
+            f"[td]{format_st}[/td]"
+            f"[td]{type_st}[/td]"
+            f"[/tr]"
+        )
+
+        lignes.append(ligne)
+        index += 1
+
+    return "\n".join(lignes)
+    
+def generer_tableau_audio(fichier_media):
+    """
+    Analyse les pistes audio et retourne les lignes BBCode du tableau.
+    """
+
+    # Correspondance langue -> drapeau
+    flags = {
+        "fr": "fr",
+        "en": "gb",
+        "ja": "jp",
+        "es": "es",
+        "it": "it",
+        "de": "de",
+        "ru": "ru",
+        "ko": "kr",
+        "zh": "cn",
+        "pt": "pt",
+        "ar": "sa"
+    }
+
+    media_info = MediaInfo.parse(fichier_media)
+
+    lignes = []
+    index = 1
+
+    for track in media_info.tracks:
+        if track.track_type != "Audio":
+            continue
+
+        langue = track.language or "Inconnue"
+        codec = track.format or "N/A"
+
+        # Nombre de canaux
+        canaux = str(track.channel_s) if track.channel_s else "N/A"
+
+        # Bitrate audio
+        bitrate = "N/A"
+        if track.bit_rate:
+            bitrate = str(int(track.bit_rate) // 1000)
+
+        # Drapeau
+        country_short_name = flags.get(
+            langue.lower(),
+            langue.lower()[:2]
+        )
+
+        ligne = (
+            f"[tr]"
+            f"[td]{index}[/td]"
+            f"[td][img=32x24]"
+            f"https://flagcdn.com/32x24/{country_short_name}.png"
+            f"[/img] {langue.capitalize()}[/td]"
+            f"[td]{codec}[/td]"
+            f"[td]{canaux}[/td]"
+            f"[td]{bitrate} kb/s[/td]"
+            f"[/tr]"
+        )
+
+        lignes.append(ligne)
+        index += 1
+
+    return "\n".join(lignes)
 # =====================================================================
 # 3. PROGRAMME PRINCIPAL
 # =====================================================================
@@ -352,7 +725,23 @@ else:
 
                 images_acteurs_bbcode = images_acteurs_bbcode.strip()
                 noms_acteurs_bbcode = noms_acteurs_bbcode.strip(" • ")
-                
+            
+            audio_tracks_bbcode = generer_tableau_audio(args.video_file)
+            subtitle_tracks_bbcode = generer_tableau_sous_titres(args.video_file)
+
+            infos_tech = generer_infos_techniques(args.video_file)
+
+            release_name = generer_release_name(
+                titre_principal,
+                annee_sortie,
+                infos_tech["quality"],
+                infos_tech["source"],
+                infos_tech["video_codec"],
+                args.video_file,
+                TEAM_NAME
+            )
+
+            nb_files, size = recuperer_infos_fichiers(args.video_file)
             # =================================================================
             # INJECTION DANS LE TEMPLATE
             # =================================================================
@@ -378,11 +767,17 @@ else:
                 "budget": bbcode_budget,
                 
                 # Champs techniques à définir par l'utilisateur
-                "source": "(ex: BluRay 2160p UHD)",
-                "quality": "(ex: 2160p UHD)",
-                "format": "(ex: MKV)",
-                "video_codec": "(ex: HEVC)",
-                "video_bitrate": "(ex: 15000 kbps)",
+                "source": infos_tech["source"],
+                "quality": infos_tech["quality"],
+                "format": infos_tech["file_format"],
+                "video_codec": infos_tech["video_codec"],
+                "video_debit": infos_tech["video_debit"],
+
+                "Release_name": release_name,
+                "nb_files": str(nb_files),
+                "size": str(size),
+                "audio_tracks": audio_tracks_bbcode,
+                "subtitle_tracks": subtitle_tracks_bbcode,
                 
                 # Bannières
                 "banner_info": BANNER_INFO,
@@ -390,7 +785,10 @@ else:
                 "banner_tech": BANNER_TECH,
                 "banner_audio": BANNER_AUDIO,
                 "banner_subs": BANNER_SUBS,
-                "banner_download": BANNER_DOWNLOAD
+                "banner_download": BANNER_DOWNLOAD,
+
+                # Autres informations
+                "team_name": TEAM_NAME
             }
             
             with open(NOM_FICHIER_TEMPLATE, 'r', encoding='utf-8') as f:

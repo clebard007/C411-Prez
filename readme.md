@@ -2,6 +2,7 @@
 Prérequis:
 - Installer la dernière version de Python
 - `git clone https://github.com/clebard007/C411-Prez.git`
+- Rensigner votre clef API TMDB
 - Enjoy.
 
 ## Infos
