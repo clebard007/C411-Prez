@@ -1,7 +1,5 @@
-[h1] [b]${title} (${year})[/b][/h1]
-[img]${affiche}[/img]
-
-
+[center][b][font=Verdana][color=#3d85c6][size=28]${title} (${year})[/color][/size][/font][/b]
+[img]${affiche}[/img][/center]
 
 
 [img]${banner_info}[/img]
